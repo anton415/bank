@@ -1,0 +1,8 @@
+# Integrated Development Environment (IDE)
+/.idea/
+
+# Compiled class file
+*.class
+
+# Log file
+*.log
