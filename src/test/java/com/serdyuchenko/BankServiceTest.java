@@ -1,8 +1,8 @@
 package com.serdyuchenko;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Anton Serdyuchenko
@@ -76,7 +76,6 @@ class BankServiceTest {
         assertThat(bank.getAccounts(user).size()).isEqualTo(1);
     }
 
-    @Ignore
     @Test
     void transferMoneyOk() {
         User user = new User("3434", "Petr Arsentev");

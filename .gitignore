@@ -1,8 +1,10 @@
 # Integrated Development Environment (IDE)
-/.idea/
+.idea
+.vscode
 
 # Compiled class file
 *.class
+target
 
 # Log file
 *.log
