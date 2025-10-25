@@ -1,0 +1,7 @@
+graph TD
+  User["User"]
+  BankApp["Bank Application (this project)"]
+  FutureDB["PostgreSQL (future)"]
+
+  User --> |"HTTP/CLI"| BankApp
+  BankApp --> |"JDBC (future)"| FutureDB
