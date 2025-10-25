@@ -1,0 +1,11 @@
+graph TD
+  Controller["Controller (future)"]
+  Service["AccountService (future)"]
+  Domain["Domain (Account)"]
+  Repo["AccountRepository (future)"]
+  DB[("DB (future)")]
+
+  Controller --> Service
+  Service --> Domain
+  Service --> Repo
+  Repo --> DB
