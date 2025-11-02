@@ -1,0 +1,62 @@
+# Bank Project — Business Logic Overview
+
+## Purpose
+- Capture the functional intent of the banking side-project so the same content can seed the first Confluence space.
+- Explain what the application currently does and what is coming next from a business perspective (architecture lives under `docs/architecture`).
+
+## Product Vision (current iteration)
+- Minimal personal banking back-office that supports a single customer interacting via CLI (HTTP later).
+- Focus on correctness of money movements and auditability; UX and integrations come later.
+- Use as a playground to learn banking rules, Java design, and later DevOps.
+
+## Actors
+- **Customer** — owns one or more accounts, initiates deposits and withdrawals.
+- **System** — enforces validation rules, keeps balances and transaction history.
+
+## Core Concepts
+- **Account** — logical ledger bucket with an identifier and running balance.
+- **Money** — value object; today tracks only amount, currency planned.
+- **Transaction** — append-only statement entry (upcoming) for bookkeeping and reconciliation.
+
+## Current Capabilities
+1. **Open account (implicit)** — when the system boots with seed data or when an account object is constructed.
+2. **Deposit funds**
+   - Amount must be greater than zero.
+   - Successful operation increases the account balance by the amount.
+3. **Withdraw funds**
+   - Amount must be greater than zero.
+   - Balance must remain non-negative; no overdraft is allowed yet.
+
+## Business Rules & Constraints
+- Every monetary amount is positive; zero or negative values are rejected before persisting.
+- Transactions are immutable; once recorded they can’t be edited (implementation pending).
+- All operations must be idempotent when retried via future APIs (note for later HTTP layer).
+- Audit trail should reflect chronological order of events once the transaction log lands.
+
+## Planned Enhancements
+1. **Transfer between accounts**
+   - Must withdraw from source before depositing to target.
+   - Needs idempotency key so duplicate requests don’t double-post.
+2. **Transaction ledger**
+   - Store each deposit/withdraw/transfer as an immutable record.
+   - Provide balance reconstruction from history to catch inconsistencies.
+3. **Persistence layer**
+   - Move from in-memory structures to PostgreSQL using JDBC or JPA.
+   - Adopt optimistic locking on account aggregates to stop lost updates.
+4. **External interfaces**
+   - CLI flows first (text menu).
+   - REST endpoints later with simple authentication.
+
+## Open Questions / Decisions to Track
+- Do we support multi-currency accounts or separate account per currency?
+- Approval rules for large withdrawals/transactions (manual review? limits?).
+- Strategy for reversing a transaction (create compensating entry vs. delete).
+- How to model fees and interest (compound schedule, daily calculation, etc.).
+
+## Suggested Confluence Structure
+- Home page: product vision + current capabilities (copy from this doc).
+- Child pages:
+  1. Customer Journeys (deposit, withdraw, transfer once ready).
+  2. Business Rules Catalogue (validation, limits, audit requirements).
+  3. Roadmap & Decisions (link to ADRs in GitHub).
+
