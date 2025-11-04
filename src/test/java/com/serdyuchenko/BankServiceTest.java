@@ -52,6 +52,13 @@ class BankServiceTest {
         bank.addUser(user);
         bank.addAccount(user.getPassport(), new Account("5546", 150D));
         assertThat(bank.findByRequisite("3434", "5546").getBalance()).isEqualTo(150D);
+        AccountStatement statement = bank.getAccountStatement("3434", "5546");
+        assertThat(statement.getClosingBalance()).isEqualTo(150D);
+        assertThat(statement.getEntries()).hasSize(1);
+        AccountStatement.Entry entry = statement.getEntries().get(0);
+        assertThat(entry.getTransaction().getType()).isEqualTo(TransactionType.ACCOUNT_OPENING);
+        assertThat(entry.getTransaction().getAmount()).isEqualTo(150D);
+        assertThat(entry.getRunningBalance()).isEqualTo(150D);
     }
 
     @Test
@@ -85,6 +92,12 @@ class BankServiceTest {
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.getMessage()).isEqualTo("Deposit completed successfully.");
         assertThat(result.getResultingBalance()).isEqualTo(250D);
+        AccountStatement statement = bank.getAccountStatement(user.getPassport(), "5546");
+        assertThat(statement.getEntries()).hasSize(2);
+        AccountStatement.Entry depositEntry = statement.getEntries().get(1);
+        assertThat(depositEntry.getTransaction().getType()).isEqualTo(TransactionType.DEPOSIT);
+        assertThat(depositEntry.getTransaction().getAmount()).isEqualTo(100D);
+        assertThat(depositEntry.getRunningBalance()).isEqualTo(250D);
     }
 
     @Test
@@ -122,6 +135,11 @@ class BankServiceTest {
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.getMessage()).isEqualTo("Withdrawal completed successfully.");
         assertThat(result.getResultingBalance()).isEqualTo(100D);
+        AccountStatement statement = bank.getAccountStatement(user.getPassport(), "5546");
+        AccountStatement.Entry withdrawalEntry = statement.getEntries().get(statement.getEntries().size() - 1);
+        assertThat(withdrawalEntry.getTransaction().getType()).isEqualTo(TransactionType.WITHDRAWAL);
+        assertThat(withdrawalEntry.getTransaction().getAmount()).isEqualTo(50D);
+        assertThat(withdrawalEntry.getRunningBalance()).isEqualTo(100D);
     }
 
     @Test
@@ -175,6 +193,23 @@ class BankServiceTest {
         assertThat(result.getMessage()).isEqualTo("Transfer completed successfully.");
         assertThat(bank.findByRequisite(user.getPassport(), "113").getBalance()).isEqualTo(200D);
         assertThat(bank.findByRequisite(user.getPassport(), "5546").getBalance()).isEqualTo(0D);
+        AccountStatement sourceStatement = bank.getAccountStatement(user.getPassport(), "5546");
+        AccountStatement.Entry transferOutEntry = sourceStatement.getEntries()
+                .get(sourceStatement.getEntries().size() - 1);
+        AccountStatement destinationStatement = bank.getAccountStatement(user.getPassport(), "113");
+        AccountStatement.Entry transferInEntry = destinationStatement.getEntries()
+                .get(destinationStatement.getEntries().size() - 1);
+        assertThat(transferOutEntry.getTransaction().getType()).isEqualTo(TransactionType.TRANSFER_OUT);
+        assertThat(transferOutEntry.getTransaction().getAmount()).isEqualTo(150D);
+        assertThat(transferOutEntry.getTransaction().getCounterparty())
+                .isEqualTo(AccountReference.of(user.getPassport(), "113"));
+        assertThat(transferInEntry.getTransaction().getType()).isEqualTo(TransactionType.TRANSFER_IN);
+        assertThat(transferInEntry.getTransaction().getAmount()).isEqualTo(150D);
+        assertThat(transferInEntry.getTransaction().getCounterparty())
+                .isEqualTo(AccountReference.of(user.getPassport(), "5546"));
+        assertThat(transferOutEntry.getTransaction().getCorrelationId())
+                .isEqualTo(transferInEntry.getTransaction().getCorrelationId());
+        assertThat(transferInEntry.getRunningBalance()).isEqualTo(200D);
     }
 
     @Test
@@ -254,4 +289,3 @@ class BankServiceTest {
         assertThat(result.getMessage()).isEqualTo("Transfer amount must be greater than zero.");
     }
 }
-

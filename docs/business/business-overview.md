@@ -16,7 +16,7 @@
 ## Core Concepts
 - **Account** — logical ledger bucket with an identifier and running balance.
 - **Money** — value object; today tracks only amount, currency planned.
-- **Transaction** — append-only statement entry (upcoming) for bookkeeping and reconciliation.
+- **Transaction** — append-only statement entry recorded in the in-memory ledger for bookkeeping and reconciliation.
 
 ## Current Capabilities
 1. **Open account (implicit)** — when the system boots with seed data or when an account object is constructed.
@@ -31,11 +31,15 @@
    - Validation failure message: "Withdrawal amount must be greater than zero."
    - Insufficient funds message: "Insufficient funds; balance cannot go below zero."
    - Success confirmation: "Withdrawal completed successfully."
+4. **Append-only transaction ledger**
+   - Successful deposits, withdrawals, transfers, and seeded balances append immutable transactions.
+   - Statement reconstruction (`getAccountStatement`) recomputes the running balance from ledger history.
 
 ## Business Rules & Constraints
 - Every monetary amount is positive; zero or negative values are rejected before persisting.
 - User receives explicit validation messaging for each operation so the CLI/service can surface the rules verbatim.
-- Transactions are immutable; once recorded they can’t be edited (implementation pending).
+- Transactions are immutable; once recorded they can’t be edited (enforced via append-only ledger).
+- Statement reconstruction must match the authoritative balance after every operation.
 - All operations must be idempotent when retried via future APIs (note for later HTTP layer).
 - Audit trail should reflect chronological order of events once the transaction log lands.
 
@@ -43,13 +47,10 @@
 1. **Transfer between accounts**
    - Must withdraw from source before depositing to target.
    - Needs idempotency key so duplicate requests don’t double-post.
-2. **Transaction ledger**
-   - Store each deposit/withdraw/transfer as an immutable record.
-   - Provide balance reconstruction from history to catch inconsistencies.
-3. **Persistence layer**
+2. **Persistence layer**
    - Move from in-memory structures to PostgreSQL using JDBC or JPA.
    - Adopt optimistic locking on account aggregates to stop lost updates.
-4. **External interfaces**
+3. **External interfaces**
    - CLI flows first (text menu).
    - REST endpoints later with simple authentication.
 

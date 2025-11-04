@@ -1,9 +1,13 @@
 package com.serdyuchenko;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Main service.
@@ -11,10 +15,17 @@ import java.util.Map;
  * @since 11.10.2025
  */
 public class BankService {
-    /**
-     * All users and there's accounts.
-     */
+    private final Clock clock;
     private final Map<User, List<Account>> users = new HashMap<>();
+    private final List<Transaction> ledger = new ArrayList<>();
+
+    public BankService() {
+        this(Clock.systemUTC());
+    }
+
+    public BankService(Clock clock) {
+        this.clock = clock;
+    }
 
     /**
      * Add user.
@@ -47,6 +58,11 @@ public class BankService {
             List<Account> accounts = users.get(user);
             if (findByRequisite(passport, account.getRequisite()) == null) {
                 accounts.add(account);
+                if (account.getBalance() > 0D) {
+                    AccountReference reference = AccountReference.of(passport, account.getRequisite());
+                    recordTransaction(Transaction.accountOpening(reference, account.getBalance(),
+                            account.getBalance(), Instant.now(clock)));
+                }
             }
         }
     }
@@ -112,9 +128,21 @@ public class BankService {
         if (source.getBalance() < amount) {
             return OperationResult.failure("Insufficient funds; balance cannot go below zero.");
         }
-        // Apply debit and credit atomically from the perspective of the in-memory model.
-        source.setBalance(source.getBalance() - amount);
-        destination.setBalance(destination.getBalance() + amount);
+        double sourceBalanceAfter = source.getBalance() - amount;
+        double destinationBalanceAfter = destination.getBalance() + amount;
+
+        source.setBalance(sourceBalanceAfter);
+        destination.setBalance(destinationBalanceAfter);
+
+        AccountReference sourceRef = AccountReference.of(sourcePassport, sourceRequisite);
+        AccountReference destinationRef = AccountReference.of(destinationPassport, destinationRequisite);
+        UUID correlationId = UUID.randomUUID();
+        Instant occurredAt = Instant.now(clock);
+
+        recordTransaction(Transaction.transferOut(sourceRef, amount, sourceBalanceAfter, occurredAt,
+                destinationRef, correlationId));
+        recordTransaction(Transaction.transferIn(destinationRef, amount, destinationBalanceAfter, occurredAt,
+                sourceRef, correlationId));
         return OperationResult.success("Transfer completed successfully.", source.getBalance());
     }
 
@@ -135,7 +163,11 @@ public class BankService {
         if (validation != null) {
             return validation;
         }
-        account.setBalance(account.getBalance() + amount);
+        double resultingBalance = account.getBalance() + amount;
+        account.setBalance(resultingBalance);
+
+        AccountReference reference = AccountReference.of(passport, requisite);
+        recordTransaction(Transaction.deposit(reference, amount, resultingBalance, Instant.now(clock)));
         return OperationResult.success("Deposit completed successfully.", account.getBalance());
     }
 
@@ -159,7 +191,11 @@ public class BankService {
         if (account.getBalance() < amount) {
             return OperationResult.failure("Insufficient funds; balance cannot go below zero.");
         }
-        account.setBalance(account.getBalance() - amount);
+        double resultingBalance = account.getBalance() - amount;
+        account.setBalance(resultingBalance);
+
+        AccountReference reference = AccountReference.of(passport, requisite);
+        recordTransaction(Transaction.withdrawal(reference, amount, resultingBalance, Instant.now(clock)));
         return OperationResult.success("Withdrawal completed successfully.", account.getBalance());
     }
 
@@ -170,7 +206,29 @@ public class BankService {
      * @return accounts registered for the user; {@code null} when the user was not added.
      */
     public List<Account> getAccounts(User user) {
-        return users.get(user);
+        List<Account> accounts = users.get(user);
+        if (accounts == null) {
+            return null;
+        }
+        return Collections.unmodifiableList(accounts);
+    }
+
+    /**
+     * Reconstructs an account statement solely from the append-only ledger.
+     *
+     * @param passport owner's passport.
+     * @param requisite account requisite.
+     * @return read model comprised of the recorded ledger entries.
+     */
+    public AccountStatement getAccountStatement(String passport, String requisite) {
+        AccountReference reference = AccountReference.of(passport, requisite);
+        List<Transaction> transactions = new ArrayList<>();
+        for (Transaction transaction : ledger) {
+            if (transaction.getAccountReference().equals(reference)) {
+                transactions.add(transaction);
+            }
+        }
+        return AccountStatement.fromTransactions(reference, transactions);
     }
 
     /**
@@ -185,5 +243,9 @@ public class BankService {
             return OperationResult.failure(operationName + " amount must be greater than zero.");
         }
         return null;
+    }
+
+    private void recordTransaction(Transaction transaction) {
+        ledger.add(transaction);
     }
 }
