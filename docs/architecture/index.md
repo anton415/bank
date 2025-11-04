@@ -9,6 +9,10 @@
 - Tests first for domain operations (deposit/withdraw).
 - Append-only transactions for auditability.
 
+**Current iteration highlights:**
+- BankService exposes deposit/withdraw/transfer use cases that return a shared `OperationResult`, ensuring callers surface consistent validation messaging.
+- Validation order follows the business overview: reject missing accounts, block zero/negative amounts, then enforce the no-overdraft rule.
+
 ## System context
 
 ```mermaid
@@ -23,9 +27,9 @@ graph TD
 ```
 
 **Next milestones:**
-1) Deposit + Balance (domain + unit tests)
-2) Withdraw (domain + tests)
-3) Transfer (domain + tests; idempotency note)
+1) Add CLI adapter that consumes `OperationResult` messaging.
+2) Persist immutable transaction log alongside balances.
+3) Introduce database-backed repositories with optimistic locking.
 
 See:
 - [Containers / layers](./container.md)

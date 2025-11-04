@@ -85,33 +85,105 @@ public class BankService {
     }
 
     /**
-     * Transfer money from one account to another.
-     * @param sourcePassport            user's passport from which will be transfer.
-     * @param sourceRequisite           account's requisite from which will be transfer.
-     * @param destinationPassport       user's passport to which will be transfer.
-     * @param destinationRequisite      account's requisite to which will be transfer.
-     * @param amount                    amount of money that will be transferred.
-     * @return                          true if transferred was successful.
+     * Transfer money from one account to another, enforcing positive amounts and no overdraft.
+     *
+     * @param sourcePassport user's passport from which funds will be transferred.
+     * @param sourceRequisite account requisite from which funds will be transferred.
+     * @param destinationPassport user's passport receiving the funds.
+     * @param destinationRequisite account requisite receiving the funds.
+     * @param amount amount of money to transfer.
+     * @return {@link OperationResult} describing success or the validation failure.
      */
-    public boolean transferMoney(String sourcePassport, String sourceRequisite,
-                                 String destinationPassport, String destinationRequisite,
-                                 double amount) {
+    public OperationResult transferMoney(String sourcePassport, String sourceRequisite,
+                                         String destinationPassport, String destinationRequisite,
+                                         double amount) {
         Account source = findByRequisite(sourcePassport, sourceRequisite);
+        if (source == null) {
+            return OperationResult.failure("Source account not found for the provided identifiers.");
+        }
         Account destination = findByRequisite(destinationPassport, destinationRequisite);
-        // validation
-        if (source == null || destination == null) {
-            return false;
+        if (destination == null) {
+            return OperationResult.failure("Destination account not found for the provided identifiers.");
+        }
+        OperationResult validation = validatePositiveAmount(amount, "Transfer");
+        if (validation != null) {
+            return validation;
         }
         if (source.getBalance() < amount) {
-            return false;
+            return OperationResult.failure("Insufficient funds; balance cannot go below zero.");
         }
-        // transfer
+        // Apply debit and credit atomically from the perspective of the in-memory model.
         source.setBalance(source.getBalance() - amount);
         destination.setBalance(destination.getBalance() + amount);
-        return true;
+        return OperationResult.success("Transfer completed successfully.", source.getBalance());
     }
 
+    /**
+     * Deposits funds into the account identified by passport and requisite.
+     *
+     * @param passport user's passport.
+     * @param requisite account requisite.
+     * @param amount amount of money to deposit.
+     * @return {@link OperationResult} describing success or the validation failure.
+     */
+    public OperationResult depositFunds(String passport, String requisite, double amount) {
+        Account account = findByRequisite(passport, requisite);
+        if (account == null) {
+            return OperationResult.failure("Account not found for the provided identifiers.");
+        }
+        OperationResult validation = validatePositiveAmount(amount, "Deposit");
+        if (validation != null) {
+            return validation;
+        }
+        account.setBalance(account.getBalance() + amount);
+        return OperationResult.success("Deposit completed successfully.", account.getBalance());
+    }
+
+    /**
+     * Withdraws funds from the account identified by passport and requisite.
+     *
+     * @param passport user's passport.
+     * @param requisite account requisite.
+     * @param amount amount of money to withdraw.
+     * @return {@link OperationResult} describing success or the validation failure.
+     */
+    public OperationResult withdrawFunds(String passport, String requisite, double amount) {
+        Account account = findByRequisite(passport, requisite);
+        if (account == null) {
+            return OperationResult.failure("Account not found for the provided identifiers.");
+        }
+        OperationResult validation = validatePositiveAmount(amount, "Withdrawal");
+        if (validation != null) {
+            return validation;
+        }
+        if (account.getBalance() < amount) {
+            return OperationResult.failure("Insufficient funds; balance cannot go below zero.");
+        }
+        account.setBalance(account.getBalance() - amount);
+        return OperationResult.success("Withdrawal completed successfully.", account.getBalance());
+    }
+
+    /**
+     * Exposes read-only view of the accounts list for a given user.
+     *
+     * @param user target user.
+     * @return accounts registered for the user; {@code null} when the user was not added.
+     */
     public List<Account> getAccounts(User user) {
         return users.get(user);
+    }
+
+    /**
+     * Validates that the provided amount is positive for the given operation.
+     *
+     * @param amount monetary amount to inspect.
+     * @param operationName name of the calling operation for error context.
+     * @return failure {@link OperationResult} when the amount is invalid; {@code null} otherwise.
+     */
+    private OperationResult validatePositiveAmount(double amount, String operationName) {
+        if (amount <= 0) {
+            return OperationResult.failure(operationName + " amount must be greater than zero.");
+        }
+        return null;
     }
 }

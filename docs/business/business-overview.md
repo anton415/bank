@@ -23,12 +23,18 @@
 2. **Deposit funds**
    - Amount must be greater than zero.
    - Successful operation increases the account balance by the amount.
+   - Validation failure message: "Deposit amount must be greater than zero."
+   - Success confirmation: "Deposit completed successfully."
 3. **Withdraw funds**
    - Amount must be greater than zero.
    - Balance must remain non-negative; no overdraft is allowed yet.
+   - Validation failure message: "Withdrawal amount must be greater than zero."
+   - Insufficient funds message: "Insufficient funds; balance cannot go below zero."
+   - Success confirmation: "Withdrawal completed successfully."
 
 ## Business Rules & Constraints
 - Every monetary amount is positive; zero or negative values are rejected before persisting.
+- User receives explicit validation messaging for each operation so the CLI/service can surface the rules verbatim.
 - Transactions are immutable; once recorded they can’t be edited (implementation pending).
 - All operations must be idempotent when retried via future APIs (note for later HTTP layer).
 - Audit trail should reflect chronological order of events once the transaction log lands.
@@ -59,4 +65,3 @@
   1. Customer Journeys (deposit, withdraw, transfer once ready).
   2. Business Rules Catalogue (validation, limits, audit requirements).
   3. Roadmap & Decisions (link to ADRs in GitHub).
-
