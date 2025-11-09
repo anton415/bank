@@ -1,4 +1,4 @@
-package com.serdyuchenko;
+package com.serdyuchenko.bank.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -7,6 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
+import com.serdyuchenko.bank.domain.Account;
+import com.serdyuchenko.bank.domain.Money;
+import com.serdyuchenko.bank.domain.User;
+import com.serdyuchenko.bank.shared.OperationResult;
+import com.serdyuchenko.bank.transaction.TransactionLedger;
+import com.serdyuchenko.bank.transaction.TransactionMetadata;
+import com.serdyuchenko.bank.transaction.TransactionType;
 
 /**
  * Main service.

@@ -1,4 +1,4 @@
-package com.serdyuchenko;
+package com.serdyuchenko.bank.domain;
 
 import java.util.Objects;
 

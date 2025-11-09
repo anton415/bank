@@ -1,4 +1,4 @@
-package com.serdyuchenko;
+package com.serdyuchenko.bank.shared;
 
 /**
  * Describes the result of a money movement operation and surfaces a user-facing message.
