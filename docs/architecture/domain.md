@@ -8,6 +8,53 @@
 - **Transaction** — append-only record of money movement stored in the ledger.  
 - **TransactionLedger** — in-memory append-only store that groups transactions by account and enforces immutability.
 
+## Dependency Map
+The Mermaid graph is sourced from `docs/architecture/dependency-map.mmd` and highlights which classes collaborate today. Service-layer nodes at the top depend on the domain, shared kernel, and transaction module below, making it easy to see where future Spring beans or adapters will plug in.
+
+```mermaid
+%% Class dependency map for the current Bank project.
+%% Render with any Mermaid-compatible viewer.
+
+graph TD
+    subgraph Service_Layer
+        BankService
+    end
+
+    subgraph Domain_Model
+        Account
+        User
+        Money
+    end
+
+    subgraph Shared_Kernel
+        OperationResult
+    end
+
+    subgraph Transaction_Module
+        TransactionLedger
+        Transaction
+        TransactionType
+        TransactionMetadata
+    end
+
+    BankService --> TransactionLedger
+    BankService --> OperationResult
+    BankService --> User
+    BankService --> Account
+    BankService --> Money
+    BankService --> TransactionType
+    BankService --> TransactionMetadata
+
+    TransactionLedger --> Transaction
+    TransactionLedger --> TransactionType
+    TransactionLedger --> TransactionMetadata
+    TransactionLedger --> Money
+
+    Transaction --> Money
+    Transaction --> TransactionType
+    Transaction --> TransactionMetadata
+```
+
 ## Account (exists)
 **State (today):**
 - id: `AccountId`
