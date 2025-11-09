@@ -5,5 +5,6 @@ package com.serdyuchenko;
  */
 public enum TransactionType {
     DEPOSIT,
-    WITHDRAWAL
+    WITHDRAWAL,
+    TRANSFER
 }

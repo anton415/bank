@@ -1,9 +1,12 @@
 package com.serdyuchenko;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Main service.
@@ -11,10 +14,27 @@ import java.util.Map;
  * @since 11.10.2025
  */
 public class BankService {
+    private final TransactionLedger ledger;
     /**
      * All users and there's accounts.
      */
     private final Map<User, List<Account>> users = new HashMap<>();
+
+    /**
+     * Creates a service backed by a fresh in-memory ledger.
+     */
+    public BankService() {
+        this(new TransactionLedger());
+    }
+
+    /**
+     * Creates a service with an injected ledger dependency for better testability/extensibility.
+     *
+     * @param ledger ledger instance to record transactions in
+     */
+    public BankService(TransactionLedger ledger) {
+        this.ledger = Objects.requireNonNull(ledger, "TransactionLedger cannot be null");
+    }
 
     /**
      * Add user.
@@ -115,6 +135,20 @@ public class BankService {
         // Apply debit and credit atomically from the perspective of the in-memory model.
         source.setBalance(source.getBalance() - amount);
         destination.setBalance(destination.getBalance() + amount);
+        String transferId = UUID.randomUUID().toString();
+        Money money = toMoney(amount);
+        ledger.record(
+            source.getRequisite(),
+            TransactionType.TRANSFER,
+            money,
+            metadata(transferId, "Transfer to account " + destination.getRequisite())
+        );
+        ledger.record(
+            destination.getRequisite(),
+            TransactionType.TRANSFER,
+            money,
+            metadata(transferId, "Transfer from account " + source.getRequisite())
+        );
         return OperationResult.success("Transfer completed successfully.", source.getBalance());
     }
 
@@ -136,6 +170,12 @@ public class BankService {
             return validation;
         }
         account.setBalance(account.getBalance() + amount);
+        ledger.record(
+            account.getRequisite(),
+            TransactionType.DEPOSIT,
+            toMoney(amount),
+            metadata("Deposit into account " + account.getRequisite())
+        );
         return OperationResult.success("Deposit completed successfully.", account.getBalance());
     }
 
@@ -160,6 +200,12 @@ public class BankService {
             return OperationResult.failure("Insufficient funds; balance cannot go below zero.");
         }
         account.setBalance(account.getBalance() - amount);
+        ledger.record(
+            account.getRequisite(),
+            TransactionType.WITHDRAWAL,
+            toMoney(amount),
+            metadata("Withdrawal from account " + account.getRequisite())
+        );
         return OperationResult.success("Withdrawal completed successfully.", account.getBalance());
     }
 
@@ -185,5 +231,17 @@ public class BankService {
             return OperationResult.failure(operationName + " amount must be greater than zero.");
         }
         return null;
+    }
+
+    private Money toMoney(double amount) {
+        return new Money("USD", BigDecimal.valueOf(amount));
+    }
+
+    private TransactionMetadata metadata(String description) {
+        return metadata(UUID.randomUUID().toString(), description);
+    }
+
+    private TransactionMetadata metadata(String transactionId, String description) {
+        return new TransactionMetadata(transactionId, description);
     }
 }
