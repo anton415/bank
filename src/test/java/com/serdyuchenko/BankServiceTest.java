@@ -2,6 +2,7 @@ package com.serdyuchenko;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class BankServiceTest {
@@ -253,5 +254,50 @@ class BankServiceTest {
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.getMessage()).isEqualTo("Transfer amount must be greater than zero.");
     }
-}
 
+    @Test
+    void depositRecordsLedgerEntryWithMetadata() {
+        TransactionLedger ledger = new TransactionLedger();
+        BankService bank = new BankService(ledger);
+        User user = new User("3434", "Anton Serdyuchenko");
+        bank.addUser(user);
+        bank.addAccount(user.getPassport(), new Account("5546", 150D));
+
+        OperationResult result = bank.depositFunds(user.getPassport(), "5546", 25D);
+
+        assertThat(result.isSuccess()).isTrue();
+        List<Transaction> entries = ledger.getTransactions("5546");
+        assertThat(entries).hasSize(1);
+        Transaction entry = entries.get(0);
+        assertThat(entry.getType()).isEqualTo(TransactionType.DEPOSIT);
+        assertThat(entry.getMetadata().getTransactionId()).isNotBlank();
+        assertThat(entry.getMetadata().getDescription()).contains("Deposit into account 5546");
+    }
+
+    @Test
+    void transferRecordsLinkedMetadataForBothAccounts() {
+        TransactionLedger ledger = new TransactionLedger();
+        BankService bank = new BankService(ledger);
+        User user = new User("3434", "Anton Serdyuchenko");
+        bank.addUser(user);
+        bank.addAccount(user.getPassport(), new Account("SRC", 200D));
+        bank.addAccount(user.getPassport(), new Account("DST", 0D));
+
+        OperationResult result = bank.transferMoney(user.getPassport(), "SRC",
+                user.getPassport(), "DST", 75D);
+
+        assertThat(result.isSuccess()).isTrue();
+        List<Transaction> sourceEntries = ledger.getTransactions("SRC");
+        List<Transaction> destinationEntries = ledger.getTransactions("DST");
+        assertThat(sourceEntries).hasSize(1);
+        assertThat(destinationEntries).hasSize(1);
+        Transaction sourceEntry = sourceEntries.get(0);
+        Transaction destinationEntry = destinationEntries.get(0);
+        assertThat(sourceEntry.getType()).isEqualTo(TransactionType.TRANSFER);
+        assertThat(destinationEntry.getType()).isEqualTo(TransactionType.TRANSFER);
+        assertThat(sourceEntry.getMetadata().getTransactionId())
+                .isEqualTo(destinationEntry.getMetadata().getTransactionId());
+        assertThat(sourceEntry.getMetadata().getDescription()).contains("to account DST");
+        assertThat(destinationEntry.getMetadata().getDescription()).contains("from account SRC");
+    }
+}
