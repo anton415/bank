@@ -1,16 +1,11 @@
 package com.serdyuchenko.bank.service;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import com.serdyuchenko.bank.domain.Account;
 import com.serdyuchenko.bank.domain.User;
 import com.serdyuchenko.bank.shared.OperationResult;
-import com.serdyuchenko.bank.transaction.Transaction;
-import com.serdyuchenko.bank.transaction.TransactionLedger;
-import com.serdyuchenko.bank.transaction.TransactionType;
 
 class BankServiceTest {
 
