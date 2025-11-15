@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import com.serdyuchenko.bank.domain.Account;
+import com.serdyuchenko.bank.domain.User;
 import com.serdyuchenko.bank.service.BankService;
 
 /**
@@ -33,5 +35,15 @@ public class StartupConfig {
     @SuppressWarnings("unused") // Spring calls @Bean methods reflectively even if IDE sees no direct usage.
     CommandLineRunner startupRunner(BankService bankService) {
         return args -> LOGGER.info("Bank application ready. Service hash: {}", Integer.toHexString(System.identityHashCode(bankService)));
+    }
+
+    @Bean
+    @Profile("!test")
+    CommandLineRunner demoData(BankService bankService) {
+        return args -> {
+            User user = new User("3434", "Anton Serdyuchenko");
+            bankService.addUser(user);
+            bankService.addAccount(user.getPassport(), new Account("5546", 150D));
+        };
     }
 }
