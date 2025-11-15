@@ -1,8 +1,12 @@
 package com.serdyuchenko.bank.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
+import com.serdyuchenko.bank.config.AppProperties;
 import com.serdyuchenko.bank.domain.Account;
 import com.serdyuchenko.bank.domain.User;
 import com.serdyuchenko.bank.shared.OperationResult;
@@ -258,7 +262,43 @@ class BankServiceTest {
         assertThat(result.getMessage()).isEqualTo("Transfer amount must be greater than zero.");
     }
 
+    @Test
+    void getAccountsReturnsDefensiveCopy() {
+        User user = new User("3434", "Anton Serdyuchenko");
+        BankService bank = newBankService();
+        bank.addUser(user);
+        bank.addAccount(user.getPassport(), new Account("5546", 150D));
+
+        List<Account> accounts = bank.getAccounts(user);
+
+        assertThat(accounts).hasSize(1);
+        assertThatThrownBy(() -> accounts.add(new Account("9999", 0)))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void transactionsUseConfiguredCurrency() {
+        User user = new User("3434", "Anton Serdyuchenko");
+        TransactionLedger ledger = new TransactionLedger();
+        AppProperties properties = new AppProperties();
+        properties.setDefaultCurrency("EUR");
+        BankService bank = new BankService(ledger, properties);
+        bank.addUser(user);
+        bank.addAccount(user.getPassport(), new Account("5546", 150D));
+
+        bank.depositFunds(user.getPassport(), "5546", 50D);
+
+        assertThat(ledger.getTransactions("5546")).hasSize(1);
+        assertThat(ledger.getTransactions("5546").get(0).getAmount().getCurrency()).isEqualTo("EUR");
+    }
+
     private BankService newBankService() {
-        return new BankService(new TransactionLedger());
+        return new BankService(new TransactionLedger(), defaultProperties());
+    }
+
+    private AppProperties defaultProperties() {
+        AppProperties properties = new AppProperties();
+        properties.setDefaultCurrency("USD");
+        return properties;
     }
 }

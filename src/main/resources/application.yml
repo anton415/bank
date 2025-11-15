@@ -1,0 +1,5 @@
+app:
+  defaultCurrency: USD
+logging:
+  level:
+    root: INFO

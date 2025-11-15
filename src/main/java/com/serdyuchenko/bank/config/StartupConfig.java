@@ -3,6 +3,7 @@ package com.serdyuchenko.bank.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -16,6 +17,7 @@ import com.serdyuchenko.bank.service.BankService;
  * @author Anton Serdyuchenko
  */
 @Configuration
+@EnableConfigurationProperties(AppProperties.class)
 public class StartupConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(StartupConfig.class);
 
