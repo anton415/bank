@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.springframework.stereotype.Service;
+
+import com.serdyuchenko.bank.config.AppProperties;
 import com.serdyuchenko.bank.domain.Account;
 import com.serdyuchenko.bank.domain.Money;
 import com.serdyuchenko.bank.domain.User;
@@ -21,27 +24,23 @@ import com.serdyuchenko.bank.transaction.TransactionType;
  * @author antonserdyuchenko
  * @since 11.10.2025
  */
+@Service
 public class BankService {
     private final TransactionLedger ledger;
     /**
      * All users and there's accounts.
      */
     private final Map<User, List<Account>> users = new HashMap<>();
-
-    /**
-     * Creates a service backed by a fresh in-memory ledger.
-     */
-    public BankService() {
-        this(new TransactionLedger());
-    }
+    private final AppProperties properties;
 
     /**
      * Creates a service with an injected ledger dependency for better testability/extensibility.
      *
      * @param ledger ledger instance to record transactions in
      */
-    public BankService(TransactionLedger ledger) {
+    public BankService(TransactionLedger ledger, AppProperties properties) {
         this.ledger = Objects.requireNonNull(ledger, "TransactionLedger cannot be null");
+        this.properties = Objects.requireNonNull(properties, "AppProperties cannot be null");
     }
 
     /**
@@ -57,11 +56,7 @@ public class BankService {
      * @param passport  passport of user that would be deleted.
      */
     public void deleteUser(String passport) {
-        for (User user : users.keySet()) {
-            if (passport.equals(user.getPassport())) {
-                users.remove(user);
-            }
-        }
+        users.entrySet().removeIf(entry -> passport.equals(entry.getKey().getPassport()));
     }
 
     /**
@@ -224,7 +219,11 @@ public class BankService {
      * @return accounts registered for the user; {@code null} when the user was not added.
      */
     public List<Account> getAccounts(User user) {
-        return users.get(user);
+        List<Account> accounts = users.get(user);
+        if (accounts == null) {
+            return List.of();
+        }
+        return List.copyOf(accounts);
     }
 
     /**
@@ -242,7 +241,7 @@ public class BankService {
     }
 
     private Money toMoney(double amount) {
-        return new Money("USD", BigDecimal.valueOf(amount));
+        return new Money(properties.getDefaultCurrency(), BigDecimal.valueOf(amount));
     }
 
     private TransactionMetadata metadata(String description) {

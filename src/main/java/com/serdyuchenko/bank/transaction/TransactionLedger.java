@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.springframework.stereotype.Component;
+
 import com.serdyuchenko.bank.domain.Money;
 
 /**
@@ -16,6 +18,7 @@ import com.serdyuchenko.bank.domain.Money;
  *
  * @author Anton Serdyuchenko
  */
+@Component
 public class TransactionLedger {
     private final Map<String, List<Transaction>> ledger = new HashMap<>();
 
