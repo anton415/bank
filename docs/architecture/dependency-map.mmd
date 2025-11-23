@@ -1,0 +1,41 @@
+%% Class dependency map for the current Bank project.
+%% Render with any Mermaid-compatible viewer.
+
+graph TD
+    subgraph Service_Layer
+        BankService
+    end
+
+    subgraph Domain_Model
+        Account
+        User
+        Money
+    end
+
+    subgraph Shared_Kernel
+        OperationResult
+    end
+
+    subgraph Transaction_Module
+        TransactionLedger
+        Transaction
+        TransactionType
+        TransactionMetadata
+    end
+
+    BankService --> TransactionLedger
+    BankService --> OperationResult
+    BankService --> User
+    BankService --> Account
+    BankService --> Money
+    BankService --> TransactionType
+    BankService --> TransactionMetadata
+
+    TransactionLedger --> Transaction
+    TransactionLedger --> TransactionType
+    TransactionLedger --> TransactionMetadata
+    TransactionLedger --> Money
+
+    Transaction --> Money
+    Transaction --> TransactionType
+    Transaction --> TransactionMetadata
