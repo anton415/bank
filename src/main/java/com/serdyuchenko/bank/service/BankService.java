@@ -18,6 +18,7 @@ import com.serdyuchenko.bank.shared.OperationResult;
 import com.serdyuchenko.bank.transaction.TransactionLedger;
 import com.serdyuchenko.bank.transaction.TransactionMetadata;
 import com.serdyuchenko.bank.transaction.TransactionType;
+import com.serdyuchenko.bank.workflow.WorkflowPort;
 
 /**
  * Main service.
@@ -32,15 +33,18 @@ public class BankService {
      */
     private final Map<User, List<Account>> users = new HashMap<>();
     private final AppProperties properties;
-
+    private final WorkflowPort workflowPort;
     /**
-     * Creates a service with an injected ledger dependency for better testability/extensibility.
+     * Creates a service with injected collaborators for persistence, configuration, and workflow orchestration.
      *
      * @param ledger ledger instance to record transactions in
+     * @param properties application configuration properties
+     * @param workflowPort port used to kick off external workflows (placeholder today)
      */
-    public BankService(TransactionLedger ledger, AppProperties properties) {
+    public BankService(TransactionLedger ledger, AppProperties properties, WorkflowPort workflowPort) {
         this.ledger = Objects.requireNonNull(ledger, "TransactionLedger cannot be null");
         this.properties = Objects.requireNonNull(properties, "AppProperties cannot be null");
+        this.workflowPort = Objects.requireNonNull(workflowPort, "WorkflowPort cannot be null");
     }
 
     /**

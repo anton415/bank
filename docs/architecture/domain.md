@@ -87,3 +87,7 @@ graph TD
 - Account ids must be non-null/non-blank.
 - Recorded transactions are never mutated or removed; replay order reflects insertion order.
 - Metadata defaults to `TransactionMetadata.empty()` but typically carries a UUID and description for traceability (see BANK-7 “Track Append-Only Transactions”).
+
+## WorkflowPort (new seam)
+- Interface for triggering workflow automation (e.g., Camunda) when domain events occur such as onboarding a user.
+- Current implementation `NoopWorkflowAdapter` is a Spring bean that does nothing, acting as a placeholder so a real engine adapter can be dropped in later without touching `BankService`.

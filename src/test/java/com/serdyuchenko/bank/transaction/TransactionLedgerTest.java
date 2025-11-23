@@ -13,7 +13,7 @@ class TransactionLedgerTest {
 
     @Test
     void recordStoresTransactionPerAccount() {
-        TransactionLedger ledger = new TransactionLedger();
+        TransactionLedger ledger = new InMemoryTransactionLedger();
 
         Transaction recorded = ledger.record("ACC-1", TransactionType.DEPOSIT,
                 money("25.00"), TransactionMetadata.empty());
@@ -27,7 +27,7 @@ class TransactionLedgerTest {
 
     @Test
     void getTransactionsIsImmutableSnapshot() {
-        TransactionLedger ledger = new TransactionLedger();
+        TransactionLedger ledger = new InMemoryTransactionLedger();
         ledger.record("ACC-1", TransactionType.DEPOSIT,
                 money("10.00"), TransactionMetadata.empty());
 
@@ -40,7 +40,7 @@ class TransactionLedgerTest {
 
     @Test
     void recordRejectsBlankAccountId() {
-        TransactionLedger ledger = new TransactionLedger();
+        TransactionLedger ledger = new InMemoryTransactionLedger();
 
         assertThatThrownBy(() -> ledger.record(" ", TransactionType.DEPOSIT,
                 money("5.00"), TransactionMetadata.empty()))

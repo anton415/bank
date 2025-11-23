@@ -4,13 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import com.serdyuchenko.bank.config.AppProperties;
 import com.serdyuchenko.bank.domain.Account;
 import com.serdyuchenko.bank.domain.User;
 import com.serdyuchenko.bank.shared.OperationResult;
+import com.serdyuchenko.bank.transaction.InMemoryTransactionLedger;
 import com.serdyuchenko.bank.transaction.TransactionLedger;
+import com.serdyuchenko.bank.workflow.WorkflowPort;
 
 class BankServiceTest {
 
@@ -279,10 +282,10 @@ class BankServiceTest {
     @Test
     void transactionsUseConfiguredCurrency() {
         User user = new User("3434", "Anton Serdyuchenko");
-        TransactionLedger ledger = new TransactionLedger();
+        TransactionLedger ledger = new InMemoryTransactionLedger();
         AppProperties properties = new AppProperties();
         properties.setDefaultCurrency("EUR");
-        BankService bank = new BankService(ledger, properties);
+        BankService bank = new BankService(ledger, properties, noopWorkflow());
         bank.addUser(user);
         bank.addAccount(user.getPassport(), new Account("5546", 150D));
 
@@ -293,12 +296,18 @@ class BankServiceTest {
     }
 
     private BankService newBankService() {
-        return new BankService(new TransactionLedger(), defaultProperties());
+        return new BankService(new InMemoryTransactionLedger(), defaultProperties(), noopWorkflow());
     }
 
     private AppProperties defaultProperties() {
         AppProperties properties = new AppProperties();
         properties.setDefaultCurrency("USD");
         return properties;
+    }
+
+    private WorkflowPort noopWorkflow() {
+        return user -> {
+            // no-op for tests
+        };
     }
 }
