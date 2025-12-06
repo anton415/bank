@@ -1,0 +1,45 @@
+name: Bug
+description: Исправление ошибки в существующем поведении
+title: "[Bug] "
+labels:
+  - "type:bug"
+assignees: []
+
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Problem
+      description: Опиши, что пошло не так.
+      placeholder: |
+        Пример: При переводе между счетами иногда получается отрицательный баланс.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Шаги, чтобы воспроизвести проблему.
+      placeholder: |
+        1. Создать счёт с балансом 100.
+        2. Попытаться перевести 200 на другой счёт.
+        3. Получить отрицательный баланс.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+      placeholder: |
+        Expected: операция должна быть отклонена.
+        Actual: баланс становится -100.
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Extra info (logs, screenshots)
+      required: false

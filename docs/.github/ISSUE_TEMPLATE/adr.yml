@@ -1,0 +1,38 @@
+name: ADR
+description: Architecture Decision Record для важного решения
+title: "[ADR] "
+labels:
+  - "type:ADR"
+assignees: []
+
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Какой фон и проблема, почему нужно решение?
+      placeholder: |
+        Пример: Нужно определить модель данных для append-only ledger и инварианты.
+    validations:
+      required: true
+
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision
+      description: Какое решение принято?
+      placeholder: |
+        Пример: Храним каждую операцию как отдельную запись ledger_entry с полями...
+    validations:
+      required: true
+
+  - type: textarea
+    id: consequences
+    attributes:
+      label: Consequences
+      description: Плюсы/минусы, ограничения и последствия.
+      placeholder: |
+        - Упрощает аудит, но увеличивает размер таблицы.
+        - Требует индексов по accountId и correlationId.
+    validations:
+      required: true
