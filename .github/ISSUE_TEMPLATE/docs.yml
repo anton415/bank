@@ -1,0 +1,41 @@
+name: Docs
+description: Задача по документации или текстам
+title: "[Docs] "
+labels:
+  - "type:docs"
+  - "domain:docs"
+assignees: []
+
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: Что должна прояснить или дать эта документация?
+      placeholder: |
+        Пример: Обновить README, убрать ссылку на Jira и добавить ссылки на GitHub Issues / Project / Wiki.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Что именно нужно изменить/добавить?
+      placeholder: |
+        - Обновить секцию "Project management".
+        - Добавить ссылку на BANK – Roadmap.
+        - Добавить ссылку на Wiki (Home).
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Как поймём, что задача сделана?
+      placeholder: |
+        - README не содержит ссылок на Jira/Confluence.
+        - Есть явные ссылки на GitHub Issues / Project / Wiki.
+    validations:
+      required: false
